@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1/8192</title>
+<style>
+  /* 全体のスタイル */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background: linear-gradient(45deg, #1a2a6c, #b21f1f, #fdbb2d);
+    background-size: 600% 600%;
+    animation: GradientBackground 15s ease infinite;
+    transition: background-color 0.3s ease, filter 0.3s ease;
+  }
+
+  /* 背景グラデーションアニメーション */
+  @keyframes GradientBackground {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  /* コンテナ設定 */
+  .container {
+    display: flex;
+    flex-direction: row;
+    min-height: 100vh;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+  }
+  
+  /* メインコンテンツのスタイル */
+  .main {
+    flex: 1;
+    text-align: center;
+    margin: 50px 20px;
+    position: relative;
+    padding: 20px;
+    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+  }
+  
+  /* サイドバーのスタイル */
+  .sidebar {
+    width: 200px;
+    border-left: 2px solid #333;
+    padding: 20px;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 0 15px 15px 0;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+  }
+
+  /* ボタンコンテナのスタイル */
+  .buttons {
+    margin: 30px 0;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    gap: 20px; /* ボタン間の隙間を広げ */
+  }
+  
+  /* ボタンの基本スタイル */
+  #button1, #button2 {
+    font-size: 1.4em;
+    padding: 15px 30px;
+    cursor: pointer;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    white-space: nowrap; /* テキストが長くなっても改行されないように */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  }
+  
+  /* 闇ボタン: 暗い紫や黒に近い背景 */
+  #button1 {
+    background-color: #2a0035; 
+  }
+  
+  /* 光ボタン: 金色っぽい背景 */
+  #button2 {
+    background-color: #ffd700; 
+    color: #000; /* 光は明るい背景なので文字は黒 */
+  }
+
+  /* ボタンのホバー効果 */
+  #button1:hover, #button2:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+  }
+  
+  /* ボタンが押されたときの効果 */
+  .button-pressed {
+    filter: brightness(0.7);
+  }
+
+  /* 結果表示のスタイル */
+  .result {
+    font-size: 1.8em;
+    margin: 30px 0;
+    color: #333;
+    min-height: 40px; 
+    transition: transform 0.3s ease;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* 正解時のフラッシュアニメーション */
+  .correct-flash {
+    animation: correctFlash 0.5s ease;
+  }
+
+  /* 不正解時のフラッシュアニメーション */
+  .incorrect-flash {
+    animation: incorrectFlash 0.5s ease;
+  }
+
+  /* 正解時のキーフレーム */
+  @keyframes correctFlash {
+    0% { background-color: #fff; }
+    50% { background-color: #ccffcc; }
+    100% { background-color: #fff; }
+  }
+
+  /* 不正解時のキーフレーム */
+  @keyframes incorrectFlash {
+    0% { background-color: #fff; }
+    50% { background-color: #ffcccc; }
+    100% { background-color: #fff; }
+  }
+
+  /* 現在の確率表示のスタイル */
+  #probability {
+    font-size: 2.5em; 
+    margin: 20px 0;
+    transition: transform 0.3s ease;
+    color: #222;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  }
+
+  /* サイドバーの見出し */
+  .sidebar h2 {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+    color: #2a0035;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  }
+
+  /* 履歴アイテムのスタイル */
+  .history-item {
+    border-bottom: 1px solid #ccc;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  /* 履歴アイテムの前に表示するアイコン */
+  .history-item::before {
+    content: '●';
+    font-size: 0.8em;
+  }
+
+  /* 正解時のアイコン色 */
+  .history-item[data-result="○"]::before {
+    color: green;
+  }
+
+  /* 不正解時のアイコン色 */
+  .history-item[data-result="×"]::before {
+    color: red;
+  }
+
+  /* コンフェッティのスタイル */
+  .confetti {
+    position: fixed;
+    top: -10px;
+    width: 12px;
+    height: 12px;
+    background-color: red;
+    animation: fall linear forwards;
+    z-index: 9999;
+    opacity: 0.8;
+    border-radius: 50%;
+  }
+
+  /* コンフェッティのアニメーション */
+  @keyframes fall {
+    to {
+      transform: translateY(100vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  /* 最高記録の表示スタイル */
+  #best-record {
+    font-weight: bold;
+    margin-bottom: 20px;
+    display: block;
+    font-size: 1.2em;
+    color: #2a0035;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  }
+
+  /* 正解率の表示スタイル */
+  #success-rate {
+    font-weight: bold;
+    margin-bottom: 20px;
+    display: block;
+    font-size: 1.2em;
+    color: #2a0035;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  }
+
+  /* テンション演出関連 */
+  .tension1 {
+    filter: brightness(1.05);
+  }
+
+  .tension2 {
+    filter: brightness(1.1);
+  }
+
+  .tension3 {
+    filter: brightness(1.15);
+  }
+  
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="main" id="main-content">
+    <h1 style="font-size:3em; color:#2a0035; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">1/8192</h1>
+    <p id="probability">現在の確率: 1/2</p>
+
+    <div class="buttons">
+      <!-- ボタンのテキストを「闇」「光」に変更 -->
+      <button id="button1">闇</button>
+      <button id="button2">光</button>
+    </div>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <div class="sidebar">
+    <div id="best-record">最高到達記録: なし</div>
+    <div id="success-rate">正解率: 0%</div>
+    <h2>履歴</h2>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<script>
+  // ゲームのロジック
+  let correctButton = null;
+  let consecutiveCount = 0; 
+  let history = []; 
+  let bestConsecutiveCount = 0; 
+  let attemptCount = 0; 
+  let successCount = 0;
+
+  const mainContent = document.getElementById("main-content");
+  const resultDisplay = document.getElementById("result");
+  const probabilityDisplay = document.getElementById("probability");
+  const button1 = document.getElementById("button1");
+  const button2 = document.getElementById("button2");
+  const historyList = document.getElementById("history-list");
+  const bestRecordDisplay = document.getElementById("best-record");
+  const successRateDisplay = document.getElementById("success-rate");
+
+  // 煽りメッセージ
+  const taunts = [
+      "この選択を外すとは…愚者の極みよ",
+      "運命の選択すら見極められぬとは哀れだな",
+      "その決断、貴様の破滅を刻む",
+      "ふはは、貴様の闇はまだ浅いな",
+      "愚か者め…この選択が全てを終わらせる",
+      "闇の深淵に飲まれたか、愚か者よ",
+      "その手は震えているのか？嘲笑すら惜しい",
+      "選択を誤るたび、貴様は闇へ堕ちていく",
+      "見えぬ先に手を伸ばす、盲目なる愚者よ",
+      "運命を裏切るとは、笑止千万!",
+      "貴様の選択、まさに絶望への誘いだ",
+      "愚かなり、貴様の瞳には真実が映らぬか",
+      "破滅の鐘が鳴り響いた、貴様の選択でな",
+      "ははっ、その選択、我が魔眼には全て見えていたぞ",
+      "滅びの足音すら聞こえぬとは、哀れだな",
+      "貴様の限界、今ここで曝け出されたな",
+      "深淵より笑い声が響く…それは貴様自身だ",
+      "光を選ばぬその手、闇の抱擁を望むか",
+      "選択の重みすら感じられぬとは…愚鈍よ",
+      "運命を弄ぶ者に待つのは、永劫の罰だ",
+      "貴様の選択が世界を暗黒に導く",
+      "その決断が貴様を永遠の闇へと誘う",
+      "無知な選択が貴様を滅ぼす道を開く",
+      "貴様の選択、まさに愚かさの極みだ"
+  ];
+
+  // 正解時の中二病的激励メッセージ
+  const tauntVictory = [
+      "闇を超え、その先に光を見るがよい！",
+      "さらなる深淵へ赴く勇気を称えよう",
+      "選ばれし者よ、その手で運命を切り拓け",
+      "血脈に刻まれし力、今ここに示せ!",
+      "限界を超え、混沌の果てにある真実を掴め！",
+      "その選択、まさに神域に至るものだ",
+      "よくぞ超えたな、運命の試練を!",
+      "世界の理を超越せし者、貴様こそ真の英雄だ",
+      "その手に宿る光、闇をも凌駕する力だ",
+      "選択一つでここまで至るとは、見事だ",
+      "勝利の風は、常に選ばれし者に吹く",
+      "混沌の中で輝きを放つとは、ただ者ではないな",
+      "正解とは、貴様の魂が選んだ未来だ",
+      "その決断、運命をも凌ぐ輝きを放っている",
+      "見事だ！深淵すら貴様の力を恐れたようだ",
+      "その一手で世界が震撼したことを知るがよい",
+      "運命の輪を回し、未来を掴む者よ",
+      "天を裂き、地を揺るがす選択の力…貴様に相応しい",
+      "貴様の瞳に宿るその輝き、勝者の証だ",
+      "選択は運命をも変える…今こそその真実を見た！",
+      "貴様の選択が新たな伝説を刻む",
+      "その勇気、世界を救う鍵となるだろう",
+      "選び取った光が闇を照らす、素晴らしい選択だ",
+      "貴様の決断が未来を切り拓く光となる"
+  ];
+
+  // ゲームの初期化
+  function initGame() {
+    correctButton = Math.random() < 0.5 ? 1 : 2;
+  }
+
+  // 履歴表示の更新
+  function updateHistoryDisplay() {
+    historyList.innerHTML = "";
+    history.slice().reverse().forEach(item => {
+      const div = document.createElement("div");
+      div.className = "history-item";
+      div.setAttribute('data-result', item.result);
+      div.textContent = `${item.color} ${item.result}`;
+      if (item.color === "闇") {
+        div.style.color = "#2a0035";
+      } else if (item.color === "光") {
+        div.style.color = "#ffd700";
+      }
+      historyList.appendChild(div);
+    });
+  }
+
+  // 現在の確率表示の更新
+  function updateProbabilityDisplay() {
+    const prob = Math.pow(2, (consecutiveCount + 1));
+    probabilityDisplay.textContent = `現在の確率: 1/${prob}`;
+  }
+
+  // 最高記録の更新
+  function updateBestRecord() {
+    if (consecutiveCount > bestConsecutiveCount) {
+      bestConsecutiveCount = consecutiveCount;
+    }
+    if (bestConsecutiveCount > 0) {
+      const prob = Math.pow(2, (bestConsecutiveCount + 1));
+      bestRecordDisplay.textContent = `最高到達記録: 1/${prob}`;
+    } else {
+      bestRecordDisplay.textContent = `最高到達記録: なし`;
+    }
+  }
+
+  // 正解率の更新
+  function updateSuccessRate() {
+    let rate = 0;
+    if (attemptCount > 0) {
+      rate = Math.floor((successCount / attemptCount) * 100);
+    }
+    successRateDisplay.textContent = `正解率: ${rate}%`;
+  }
+
+  // テンション効果の適用
+  function applyTensionEffects() {
+    document.body.classList.remove('tension1', 'tension2', 'tension3');
+    if (consecutiveCount >= 6 && consecutiveCount < 9) {
+      document.body.classList.add('tension1');
+    } else if (consecutiveCount >= 9 && consecutiveCount < 11) {
+      document.body.classList.add('tension2');
+    } else if (consecutiveCount >= 11) {
+      document.body.classList.add('tension3');
+    }
+  }
+
+  // テンション効果のリセット
+  function resetTensionEffects() {
+    document.body.classList.remove('tension1', 'tension2', 'tension3');
+  }
+
+  // 配列からランダムな項目を選ぶ関数
+  function randomItem(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  // 回答のチェック
+  function checkAnswer(selected) {
+    flashButton(selected === 1 ? button1 : button2);
+    attemptCount++;
+
+    // 色指定は「闇」か「光」
+    const correctColor = (correctButton === 1) ? "闇" : "光";
+
+    if (selected === correctButton) {
+      successCount++;
+      history.push({color: correctColor, result: "○"});
+      updateHistoryDisplay();
+
+      consecutiveCount++;
+
+      const hue = ((consecutiveCount) * 30) % 360;
+      if (consecutiveCount < 15) { // 最大テンションを15に拡張
+        document.body.style.backgroundColor = `hsl(${hue}, 100%, 90%)`;
+      }
+
+      mainContent.classList.remove("incorrect-flash");
+      mainContent.classList.add("correct-flash");
+
+      let msg = "正解！";
+      if (consecutiveCount >= 6) {
+        msg += " " + randomItem(tauntVictory);
+      }
+      resultDisplay.textContent = msg;
+
+      updateProbabilityDisplay();
+      updateBestRecord();
+      updateSuccessRate();
+      applyTensionEffects();
+
+      if (consecutiveCount === 15) { // クリア条件を15に変更
+        resultDisplay.textContent = "クリアおめでとうございます！ " + randomItem(tauntVictory);
+        celebrate();
+        button1.disabled = true;
+        button2.disabled = true;
+      } else {
+        initGame();
+      }
+    } else {
+      history.push({color: correctColor, result: "×"});
+      updateHistoryDisplay();
+
+      mainContent.classList.remove("correct-flash");
+      mainContent.classList.add("incorrect-flash");
+
+      const taunt = randomItem(taunts);
+      resultDisplay.textContent = taunt;
+
+      consecutiveCount = 0;
+      probabilityDisplay.textContent = "現在の確率: 1/2";
+      document.body.style.backgroundColor = "#fff";
+      resetTensionEffects();
+      updateSuccessRate();
+      initGame();
+    }
+  }
+
+  // ボタンを一時的に押された状態にする
+  function flashButton(btn) {
+    btn.classList.add("button-pressed");
+    setTimeout(() => {
+      btn.classList.remove("button-pressed");
+    }, 200);
+  }
+
+  // コンフェッティを生成して祝う
+  function celebrate() {
+    for (let i = 0; i < 100; i++) { // コンフェッティの数を増加
+      createConfetti();
+    }
+  }
+
+  // コンフェッティを作成する関数
+  function createConfetti() {
+    const confetti = document.createElement("div");
+    confetti.classList.add("confetti");
+    const colors = ["red", "blue", "green", "yellow", "purple", "orange", "cyan", "pink", "lime", "magenta"];
+    const color = randomItem(colors);
+    confetti.style.backgroundColor = color;
+    const startX = Math.random() * 100;
+    const fallDuration = 3 + Math.random() * 2;
+    confetti.style.left = startX + "vw";
+    confetti.style.animationDuration = fallDuration + "s";
+    confetti.style.width = `${Math.random() * 8 + 4}px`;
+    confetti.style.height = confetti.style.width;
+    confetti.style.borderRadius = "50%";
+    document.body.appendChild(confetti);
+    setTimeout(() => {
+      confetti.remove();
+    }, fallDuration * 1000);
+  }
+
+  // ボタンのクリックイベントリスナー
+  button1.addEventListener("click", () => {
+    if (!button1.disabled && !button2.disabled) {
+      checkAnswer(1);
+    }
+  });
+  button2.addEventListener("click", () => {
+    if (!button1.disabled && !button2.disabled) {
+      checkAnswer(2);
+    }
+  });
+
+  // ゲームの初期設定
+  consecutiveCount = 0;
+  probabilityDisplay.textContent = "現在の確率: 1/2";
+  updateSuccessRate();
+  initGame();
+</script>
+
+</body>
+</html>
